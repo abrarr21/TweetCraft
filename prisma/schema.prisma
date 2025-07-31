@@ -15,8 +15,20 @@ datasource db {
 }
 
 model User {
-    id             Int     @id @default(autoincrement())
-    email          String  @unique
+    id             Int            @id @default(autoincrement())
+    email          String         @unique
     name           String?
     profilePicture String?
+    corePrompt     String?
+    interactions   Interactions[]
+}
+
+model Interactions {
+    id         String   @id @default(uuid())
+    userPrompt String
+    aiResponse String
+    tone       String
+    createdAt  DateTime @default(now())
+    userId     Int
+    user       User     @relation(fields: [userId], references: [id])
 }
