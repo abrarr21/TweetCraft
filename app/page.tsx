@@ -1,3 +1,7 @@
 export default function Home() {
-    return <div>Hello, world</div>;
+    return (
+        <div className="">
+            <div className="flex"></div>
+        </div>
+    );
 }

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Providers from "./providers";
+import Appbar from "@/components/Appbar";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -25,9 +27,27 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body
-                className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+                className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black`}
             >
-                {children}
+                <Providers>
+                    <div className="min-h-screen w-full bg-black relative overflow-x-hidden">
+                        {/* Midnight Mist */}
+                        <div
+                            className="absolute inset-0 z-0"
+                            style={{
+                                backgroundImage: `
+          radial-gradient(circle at 50% 100%, rgba(70, 85, 110, 0.5) 0%, transparent 60%),
+          radial-gradient(circle at 50% 100%, rgba(99, 102, 241, 0.4) 0%, transparent 70%),
+          radial-gradient(circle at 50% 100%, rgba(181, 184, 208, 0.3) 0%, transparent 80%)
+        `,
+                            }}
+                        />
+                        {/* Your Content/Components */}
+                        <Appbar />
+                        <div className="relative z-10">{children}</div>
+                        {children}
+                    </div>
+                </Providers>
             </body>
         </html>
     );
