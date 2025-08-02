@@ -25,7 +25,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning>
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black`}
             >
@@ -45,7 +45,6 @@ export default function RootLayout({
                         {/* Your Content/Components */}
                         <Appbar />
                         <div className="relative z-10">{children}</div>
-                        {children}
                     </div>
                 </Providers>
             </body>

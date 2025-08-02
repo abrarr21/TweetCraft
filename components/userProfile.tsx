@@ -26,7 +26,7 @@ export default function UserProfile() {
                         </Avatar>
                     ) : (
                         <div className="cursor-pointer p-2 rounded-full transition-colors">
-                            <LayoutGrid className="w-6 h-6 text-white" />
+                            <LayoutGrid className="w-6 h-6 text-white hover:text-neutral-600 " />
                         </div>
                     )}
                 </DropdownMenuTrigger>
