@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
         if (!tweet || !tone) {
             return NextResponse.json(
-                { success: false, message: "Tweent and Tone are required" },
+                { success: false, message: "Tweet and Tone are required" },
                 { status: 400 },
             );
         }
@@ -40,9 +40,14 @@ export async function POST(req: Request) {
                 promptInput = process.env.SYSTEM_PROMPT!;
             }
         } else {
-            const ip = getClientIp();
+            const ip = await getClientIp();
             const redisKey = `redis_guest_${ip}`;
             const usage = await redis.incr(redisKey);
+
+            if (usage === 1) {
+                await redis.expire(redisKey, 60 * 60 * 24);
+            }
+
             if (usage > 2) {
                 return NextResponse.json(
                     {
@@ -70,6 +75,10 @@ export async function POST(req: Request) {
 
         const result = await model.generateContent(prompt);
         const aiResponse = result.response.text();
+
+        if (!aiResponse) {
+            throw new Error("AI response is empty or undefined");
+        }
 
         if (userId) {
             await prisma.interactions.create({
