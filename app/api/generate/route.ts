@@ -42,10 +42,11 @@ export async function POST(req: Request) {
         } else {
             const ip = await getClientIp();
             const redisKey = `redis_guest_${ip}`;
-            const usage = await redis.incr(redisKey);
+            const redisClient = await redis;
+            const usage = await redisClient.incr(redisKey);
 
             if (usage === 1) {
-                await redis.expire(redisKey, 60 * 60 * 24);
+                await redisClient.expire(redisKey, 60 * 60 * 24);
             }
 
             if (usage > 2) {
