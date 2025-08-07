@@ -1,11 +1,31 @@
-type ResultProps = {
-    response: string;
-};
+"use client";
+import { ResultProps } from "@/lib/types";
+import { useEffect, useState } from "react";
 
-export default function Result({ response }: ResultProps) {
+export default function Result({ response, speed = 30 }: ResultProps) {
+    const [displayedText, setDisplayedText] = useState("");
+    const [index, setIndex] = useState(0);
+
+    useEffect(() => {
+        if (index < response.length) {
+            const timeout = setTimeout(() => {
+                setDisplayedText((prev) => prev + response[index]);
+                setIndex((prev) => prev + 1);
+            }, speed);
+            return () => clearTimeout(timeout);
+        }
+    }, [response, speed, index]);
+
+    useEffect(() => {
+        setDisplayedText("");
+        setIndex(0);
+    }, [response]);
+
     return (
-        <div className="w-9/12 min-h-10 md:w-full md:min-h-16 border-2 rounded-md border-zinc-500 bg-gray-400/30 shadow-lg text-white flex justify-center items-center">
-            <div className=" p-2 m-1 ">{response}</div>
-        </div>
+        <>
+            <div>
+                <div className="m-2 p-2">{displayedText}</div>
+            </div>
+        </>
     );
 }

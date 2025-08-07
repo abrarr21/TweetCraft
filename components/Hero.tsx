@@ -1,12 +1,13 @@
-import Textarea from "./Textarea";
+import MainPage from "./Main";
 
 export default function Hero() {
     return (
-        <div className="flex flex-col items-center justify-center gap-10">
-            <h1 className="text-6xl mt-32 max-sm:text-2xl font-bold text-white">
+        <div /* className="flex flex-col items-center justify-center gap-4 md:gap-8" */
+        >
+            <h1 className="mt-24 bg-transparent bg-clip-text text-6xl font-bold text-neutral-200 max-sm:text-2xl md:mt-32">
                 Tell me what to spice up!
             </h1>
-            <Textarea />
+            {/* <MainPage /> */}
         </div>
     );
 }

@@ -9,6 +9,7 @@ import {
     DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { LayoutGrid } from "lucide-react";
+import CreditButton from "./creditBtn";
 
 export default function UserProfile() {
     const { data: session } = useSession();
@@ -25,13 +26,13 @@ export default function UserProfile() {
                             />
                         </Avatar>
                     ) : (
-                        <div className="cursor-pointer p-2 rounded-full transition-colors">
-                            <LayoutGrid className="w-6 h-6 text-white hover:text-neutral-600 " />
+                        <div className="cursor-pointer rounded-full p-2 transition-colors">
+                            <LayoutGrid className="text-neutral-200 hover:text-neutral-600" />
                         </div>
                     )}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                    className="w-36 md:w-48 bg-zinc-900 border-zinc-700 text-white"
+                    className="w-32 border-zinc-700 bg-zinc-900 text-white md:w-36"
                     align="end"
                 >
                     {session ? (
@@ -49,6 +50,10 @@ export default function UserProfile() {
                     ) : (
                         <>
                             <DropdownMenuLabel>Welcome</DropdownMenuLabel>
+
+                            <DropdownMenuItem>
+                                <CreditButton />
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                                 onClick={() => signIn("google")}
                                 className="text-blue-600 focus:text-blue-600"

@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 import Appbar from "@/components/Appbar";
+import { Toaster } from "sonner";
+import AuthWatcher from "@/components/AuthWatcher";
+import Footer from "@/components/Footer";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -25,12 +28,12 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" suppressHydrationWarning>
+        <html lang="en" suppressHydrationWarning={true}>
             <body
-                className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black`}
+                className={`${geistSans.variable} ${geistMono.variable} bg-black antialiased`}
             >
                 <Providers>
-                    <div className="min-h-screen w-full bg-black relative overflow-x-hidden">
+                    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-black">
                         {/* Midnight Mist */}
                         <div
                             className="absolute inset-0 z-0"
@@ -45,8 +48,13 @@ export default function RootLayout({
                         {/* Your Content/Components */}
                         <Appbar />
                         <div className="relative z-10">{children}</div>
+                        <footer className="z-10">
+                            <Footer />
+                        </footer>
+                        <AuthWatcher />
                     </div>
                 </Providers>
+                <Toaster richColors position="bottom-right" />
             </body>
         </html>
     );
