@@ -36,6 +36,7 @@ export default function DialogDemo() {
             console.log("Submitted successfully", res.data);
             toast.success("Core prompt saved successfully");
             setInput("");
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.log("Error submitting", error);
 

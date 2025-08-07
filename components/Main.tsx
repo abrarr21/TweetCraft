@@ -97,6 +97,7 @@ export default function MainPage() {
             } else {
                 throw new Error("Invalid response format");
             }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error("Error generating content:", error);
 
@@ -116,7 +117,7 @@ export default function MainPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [content, selectedTone, isButtonEnabled, isLoading, lastGenerated]);
+    }, [content, selectedTone, isButtonEnabled, isLoading]);
 
     // Clear response when content changes significantly
     const handleClearResponse = useCallback(() => {
