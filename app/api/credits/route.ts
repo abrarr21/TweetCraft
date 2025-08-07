@@ -13,7 +13,8 @@ export async function GET() {
 
     const ip = await getClientIp();
     const redisKey = `redis_guest_${ip}`;
-    const used = Number(await redis.get(redisKey)) || 0;
+    const redisClient = await redis;
+    const used = Number(await redisClient.get(redisKey)) || 0;
     const remaining = Math.max(2 - used, 0);
 
     return NextResponse.json({ credits: remaining });
