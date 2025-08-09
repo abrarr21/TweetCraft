@@ -12,6 +12,7 @@ import Result from "./Result";
 import { toast } from "sonner";
 import { TONES } from "@/constants/tones";
 import { GenerateRequest, GenerateResponse } from "@/lib/types";
+import CopyShare from "./CopyShare";
 
 const DEFAULT_TONE = "Formal";
 
@@ -132,6 +133,13 @@ export default function MainPage() {
         handleClearResponse();
     }, [handleClearResponse]);
 
+    const copyToClipboard = () => {
+        if (!aiResponse) return;
+
+        navigator.clipboard.writeText(aiResponse);
+        toast.success("Text copied to clipboard");
+    };
+
     return (
         <>
             <main className="min-h-10 w-11/12 rounded-md border-2 border-zinc-500 bg-gray-400/30 shadow-lg md:min-h-24 md:w-7/12">
@@ -197,18 +205,21 @@ export default function MainPage() {
             </main>
 
             {aiResponse?.trim() && (
-                <div
-                    className={`${aiResponse.trim() === "" ? "hidden" : "block"} md:text-md mx-auto mt-7 flex min-h-8 w-11/12 items-center justify-center rounded-md border-2 border-zinc-500 bg-zinc-900/70 text-white shadow-lg max-sm:text-xs md:mx-auto md:mt-4 md:min-h-16 md:w-7/12`}
-                    style={{
-                        // height: "80px",
-                        overflowY: "hidden",
-                        overflowX: "hidden",
-                    }}
-                >
-                    <div>
-                        <Result response={aiResponse} />
+                <>
+                    <CopyShare copyText={copyToClipboard} />
+                    <div
+                        className={`${aiResponse.trim() === "" ? "hidden" : "block"} md:text-md relative mx-auto mt-3 flex min-h-8 w-11/12 items-center justify-center rounded-md border-2 border-zinc-500 bg-zinc-900/70 text-white shadow-lg max-sm:text-xs md:mx-auto md:mt-1 md:min-h-16 md:w-7/12`}
+                        style={{
+                            // height: "80px",
+                            overflowY: "hidden",
+                            overflowX: "hidden",
+                        }}
+                    >
+                        <div>
+                            <Result response={aiResponse} />
+                        </div>
                     </div>
-                </div>
+                </>
             )}
         </>
     );
