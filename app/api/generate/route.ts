@@ -4,8 +4,8 @@ import { authOptions } from "../auth/[...nextauth]/option";
 import { prisma } from "@/lib/prisma";
 import { gemini } from "@/lib/gemini";
 import { getClientIp } from "@/lib/getClientIp";
-import { redis } from "@/lib/redis";
 import { generatePrompt } from "@/lib/prompt";
+import { checkRateLimit } from "@/lib/ratelimit";
 
 type Body = {
     tweet: string;
@@ -24,15 +24,33 @@ export async function POST(req: Request) {
         }
 
         const session = await getServerSession(authOptions);
+
         let promptInput: string;
         let userId: number | undefined = undefined;
 
         if (session?.user?.email) {
+            const rate = await checkRateLimit({
+                key: `auth_user_${session?.user?.email}`,
+                limit: 10,
+                window: 60,
+            });
+
+            if (!rate.isAllowed) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        message: "Rate limit exceeded. Max 10 reqs/min",
+                    },
+                    { status: 429 },
+                );
+            }
+
             const user = await prisma.user.findFirst({
                 where: {
                     email: session.user.email,
                 },
             });
+
             if (user) {
                 promptInput = user.corePrompt ?? process.env.SYSTEM_PROMPT!;
                 userId = user.id;
@@ -41,20 +59,17 @@ export async function POST(req: Request) {
             }
         } else {
             const ip = await getClientIp();
-            const redisKey = `redis_guest_${ip}`;
-            const redisClient = await redis;
-            const usage = await redisClient.incr(redisKey);
+            const rate = await checkRateLimit({
+                key: `guest_user_${ip}`,
+                limit: 2,
+                window: 60 * 60 * 24,
+            });
 
-            if (usage === 1) {
-                await redisClient.expire(redisKey, 60 * 60 * 24);
-            }
-
-            if (usage > 2) {
+            if (!rate.isAllowed) {
                 return NextResponse.json(
                     {
                         success: false,
-                        message:
-                            "Free limit exceeded. Please login to continue using the service.",
+                        message: "Free limit exceeded. Please login.",
                         requireauth: true,
                     },
                     { status: 403 },

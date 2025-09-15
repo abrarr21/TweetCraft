@@ -112,6 +112,11 @@ export default function MainPage() {
                 toast.error("Server error. Please try again later");
             } else if (error.code === "NETWORK_ERROR") {
                 toast.error("Network error. Please check your connection");
+            } else if (error.response?.status === 429) {
+                toast.error(
+                    error.response.data?.message ||
+                        "Rate Limit exceeded. Max 10 Requests/min",
+                );
             } else {
                 toast.error("Failed to refine the tweet. Try again later");
             }

@@ -2,20 +2,31 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/option";
 import { NextResponse } from "next/server";
 import { getClientIp } from "@/lib/getClientIp";
-import { redis } from "@/lib/redis";
+import { checkRateLimit } from "@/lib/ratelimit";
 
 export async function GET() {
     const session = await getServerSession(authOptions);
 
     if (session?.user?.email) {
-        return NextResponse.json({ credits: "infinite" });
+        // Authenticated User: 10 Reqs/min
+        const rate = await checkRateLimit({
+            key: `auth_user_${session.user.email}`,
+            limit: 10,
+            window: 60,
+        });
+
+        return NextResponse.json({
+            credits: rate.remaining,
+            limit: rate.limit,
+        });
     }
 
     const ip = await getClientIp();
-    const redisKey = `redis_guest_${ip}`;
-    const redisClient = await redis;
-    const used = Number(await redisClient.get(redisKey)) || 0;
-    const remaining = Math.max(2 - used, 0);
+    const rate = await checkRateLimit({
+        key: `guest_user_${ip}`,
+        limit: 2,
+        window: 60 * 60 * 24,
+    });
 
-    return NextResponse.json({ credits: remaining });
+    return NextResponse.json({ credits: rate.remaining, limit: rate.limit });
 }
