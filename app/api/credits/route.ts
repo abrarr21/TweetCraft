@@ -22,11 +22,11 @@ export async function GET() {
     }
 
     const ip = await getClientIp();
-    const rate = await checkRateLimit({
-        key: `guest_user_${ip}`,
-        limit: 2,
-        window: 60 * 60 * 24,
-    });
 
-    return NextResponse.json({ credits: rate.remaining, limit: rate.limit });
+    const redis = (await import("@/lib/redis")).redis;
+    const redisClient = await redis;
+    const actualUsage = (await redisClient.get(`guest_user_${ip}`)) || 0;
+    const actualRemaining = Math.max(2 - Number(actualUsage), 0);
+
+    return NextResponse.json({ credits: actualRemaining, limit: 2 });
 }

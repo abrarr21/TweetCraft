@@ -59,10 +59,11 @@ export async function POST(req: Request) {
             }
         } else {
             const ip = await getClientIp();
+            console.log("Detected IP ---->  ", ip);
             const rate = await checkRateLimit({
                 key: `guest_user_${ip}`,
                 limit: 2,
-                window: 60 * 60 * 24,
+                window: 60 * 60,
             });
 
             if (!rate.isAllowed) {
