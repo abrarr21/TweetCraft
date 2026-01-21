@@ -34,25 +34,23 @@ export default function RootLayout({
             >
                 <Providers>
                     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-black">
-                        {/* Midnight Mist */}
+                        {/* Magenta Nebula Background with Top Glow */}
                         <div
                             className="absolute inset-0 z-0"
                             style={{
-                                backgroundImage: `
-          radial-gradient(circle at 50% 100%, rgba(70, 85, 110, 0.5) 0%, transparent 60%),
-          radial-gradient(circle at 50% 100%, rgba(99, 102, 241, 0.4) 0%, transparent 70%),
-          radial-gradient(circle at 50% 100%, rgba(181, 184, 208, 0.3) 0%, transparent 80%)
-        `,
+                                background:
+                                    "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(236, 72, 153, 0.25), transparent 70%), #000000",
                             }}
                         />
+
                         {/* Your Content/Components */}
                         <Appbar />
                         <div className="relative z-10">{children}</div>
-                        <footer className="z-10">
-                            <Footer />
-                        </footer>
-                        <AuthWatcher />
                     </div>
+                    <footer className="z-10">
+                        <Footer />
+                    </footer>
+                    <AuthWatcher />
                 </Providers>
                 <Toaster richColors position="bottom-right" />
             </body>
