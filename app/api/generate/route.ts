@@ -121,10 +121,14 @@ export async function POST(req: Request) {
 
             aiResponse = content;
             if (!aiResponse) throw new Error("AI response is empty");
-        } catch (err: any) {
+        } catch (err) {
             console.error("AI generation error:", err);
 
-            if (err.code === 429 || err.message.includes("quota")) {
+            if (
+                err instanceof Error &&
+                (err.message.includes("quota") ||
+                    (err as { code?: number }).code === 429)
+            ) {
                 return NextResponse.json(
                     {
                         success: false,
@@ -133,7 +137,6 @@ export async function POST(req: Request) {
                     { status: 429 },
                 );
             }
-
             throw err;
         }
 
