@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "../auth/[...nextauth]/option";
 import { prisma } from "@/lib/prisma";
-import { gemini } from "@/lib/gemini";
+import { llama } from "@/lib/llama";
 import { getClientIp } from "@/lib/getClientIp";
 import { generatePrompt } from "@/lib/prompt";
 import { checkRateLimit } from "@/lib/ratelimit";
@@ -25,17 +25,19 @@ export async function POST(req: Request) {
 
         if (!process.env.SYSTEM_PROMPT || !process.env.GEMINI_MODEL) {
             return NextResponse.json(
-                { success: false, message: "Server misconfigured"},
-                { status: 500}
-            )
+                { success: false, message: "Server misconfigured" },
+                { status: 500 },
+            );
         }
 
         let session = null;
         try {
-            
             session = await getServerSession(authOptions);
         } catch (error) {
-            console.warn("Failed to get session (user will be treated as guest):", error);
+            console.warn(
+                "Failed to get session (user will be treated as guest):",
+                error,
+            );
             session = null;
         }
 
@@ -100,38 +102,39 @@ export async function POST(req: Request) {
             systemPrompt: promptInput,
         });
 
-        const model = gemini.getGenerativeModel({
-            model: process.env.GEMINI_MODEL as string,
-        });
-
         let aiResponse: string;
-
         try {
-          const result = await model.generateContent(prompt);
-          aiResponse = result.response.text();
+            const chatCompletion = await llama.chatCompletion({
+                model: "meta-llama/Llama-3.1-8B-Instruct:cerebras",
+                messages: [
+                    {
+                        role: "system",
+                        content:
+                            "Rewrite the tweet exactly in the requested tone. Return ONLY the tweet text with approriate emoji (if needed). Do NOT add any explanations, notes, or extra content.",
+                    },
+                    { role: "user", content: prompt },
+                ],
+            });
 
-          if (!aiResponse) {
-            throw new Error("AI response is empty or undefined");
-          }
-        } catch (error: any) {
-          console.error("AI generation error:", error);
+            const content = chatCompletion?.choices[0]?.message?.content;
+            if (!content) throw new Error("AI response is Empty");
 
-          if (
-            error.message.includes("You exceeded your current quota") ||
-            error.code === 429
-          ) {
-            return NextResponse.json(
-              {
-                success: false,
-                message:
-                  "AI quota exceeded. Please wait or upgrade your plan.",
-              },
-              { status: 429 }
-            );
-          }
+            aiResponse = content;
+            if (!aiResponse) throw new Error("AI response is empty");
+        } catch (err: any) {
+            console.error("AI generation error:", err);
 
-          // fallback for other unexpected errors
-          throw error;
+            if (err.code === 429 || err.message.includes("quota")) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        message: "AI quota exceeded. Please wait or upgrade.",
+                    },
+                    { status: 429 },
+                );
+            }
+
+            throw err;
         }
 
         if (userId) {
