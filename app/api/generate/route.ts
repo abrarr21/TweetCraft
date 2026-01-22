@@ -23,7 +23,21 @@ export async function POST(req: Request) {
             );
         }
 
-        const session = await getServerSession(authOptions);
+        if (!process.env.SYSTEM_PROMPT || !process.env.GEMINI_MODEL) {
+            return NextResponse.json(
+                { success: false, message: "Server misconfigured"},
+                { status: 500}
+            )
+        }
+
+        let session = null;
+        try {
+            
+            session = await getServerSession(authOptions);
+        } catch (error) {
+            console.warn("Failed to get session (user will be treated as guest):", error);
+            session = null;
+        }
 
         let promptInput: string;
         let userId: number | undefined = undefined;
@@ -90,11 +104,34 @@ export async function POST(req: Request) {
             model: process.env.GEMINI_MODEL as string,
         });
 
-        const result = await model.generateContent(prompt);
-        const aiResponse = result.response.text();
+        let aiResponse: string;
 
-        if (!aiResponse) {
+        try {
+          const result = await model.generateContent(prompt);
+          aiResponse = result.response.text();
+
+          if (!aiResponse) {
             throw new Error("AI response is empty or undefined");
+          }
+        } catch (error: any) {
+          console.error("AI generation error:", error);
+
+          if (
+            error.message.includes("You exceeded your current quota") ||
+            error.code === 429
+          ) {
+            return NextResponse.json(
+              {
+                success: false,
+                message:
+                  "AI quota exceeded. Please wait or upgrade your plan.",
+              },
+              { status: 429 }
+            );
+          }
+
+          // fallback for other unexpected errors
+          throw error;
         }
 
         if (userId) {
