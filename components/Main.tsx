@@ -1,9 +1,9 @@
 "use client";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import axios from "axios";
 import { Forward } from "lucide-react";
@@ -13,219 +13,288 @@ import { toast } from "sonner";
 import { TONES } from "@/constants/tones";
 import { GenerateRequest, GenerateResponse } from "@/lib/types";
 import CopyShare from "./CopyShare";
+import { useQueryClient } from "@tanstack/react-query";
+import { SUGGESTIONS } from "@/constants/suggestions";
 
 const DEFAULT_TONE = "Formal";
 
 export default function MainPage() {
-    const [content, setContent] = useState("");
-    const [selectedTone, setSelectedTone] = useState<string>(DEFAULT_TONE);
-    const [aiResponse, setAiResponse] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+  const [content, setContent] = useState("");
+  const [selectedTone, setSelectedTone] = useState<string>(DEFAULT_TONE);
+  const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-    // Track the last generated state to determine if regeneration is needed
-    const [lastGenerated, setLastGenerated] = useState<{
-        content: string;
-        tone: string;
-    } | null>(null);
+  const queryClient = useQueryClient();
 
-    // Memoized check for button enabled state
-    const isButtonEnabled = useMemo(() => {
-        const hasContent = content.trim().length > 0;
+  // Track the last generated state to determine if regeneration is needed
+  const [lastGenerated, setLastGenerated] = useState<{
+    content: string;
+    tone: string;
+  } | null>(null);
 
-        if (!hasContent) return false;
+  // Memoized check for button enabled state
+  const isButtonEnabled = useMemo(() => {
+    const hasContent = content.trim().length > 0;
 
-        // If no previous generation, enable button
-        if (!lastGenerated) return true;
+    if (!hasContent) return false;
 
-        // Enable if content or tone has changed since last generation
-        return (
-            lastGenerated.content !== content.trim() ||
-            lastGenerated.tone !== selectedTone
-        );
-    }, [content, selectedTone, lastGenerated]);
+    // If no previous generation, enable button
+    if (!lastGenerated) return true;
 
-    // Memoized textarea resize handler
-    const handleInput = useCallback(
-        (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-            const target = e.target;
-            target.style.height = "auto";
-            target.style.height = `${target.scrollHeight}px`;
-        },
-        [],
-    );
-
-    // Memoized content change handler
-    const handleContentChange = useCallback(
-        (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-            setContent(e.target.value);
-        },
-        [],
-    );
-
-    // Memoized tone selection handler
-    const handleToneSelect = useCallback((tone: string) => {
-        setSelectedTone(tone);
-    }, []);
-
-    const handleSubmit = useCallback(async () => {
-        if (!isButtonEnabled || isLoading) return;
-
-        const trimmedContent = content.trim();
-
-        try {
-            setIsLoading(true);
-
-            const requestData: GenerateRequest = {
-                tweet: trimmedContent,
-                tone: selectedTone,
-            };
-
-            const response = await axios.post<GenerateResponse>(
-                "/api/generate",
-                requestData,
-            );
-
-            if (response.data?.message) {
-                setAiResponse(response.data.message);
-
-                // Update last generated state
-                setLastGenerated({
-                    content: trimmedContent,
-                    tone: selectedTone,
-                });
-
-                console.log("Generation successful:", response.data);
-            } else {
-                throw new Error("Invalid response format");
-            }
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            console.error("Error generating content:", error);
-
-            // Enhanced error handling
-            if (
-                error.response?.status === 403 &&
-                error.response?.data?.requireauth
-            ) {
-                toast.error("Free limit exceeded. Please login to continue");
-            } else if (error.response?.status >= 500) {
-                toast.error("Server error. Please try again later");
-            } else if (error.code === "NETWORK_ERROR") {
-                toast.error("Network error. Please check your connection");
-            } else if (error.response?.status === 429) {
-                toast.error(
-                    error.response.data?.message ||
-                        "Rate Limit exceeded. Max 10 Requests/min",
-                );
-            } else {
-                toast.error("Failed to refine the tweet. Try again later");
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    }, [content, selectedTone, isButtonEnabled, isLoading]);
-
-    // Clear response when content changes significantly
-    const handleClearResponse = useCallback(() => {
-        if (aiResponse && (!content.trim() || !lastGenerated)) {
-            setAiResponse(null);
-            setLastGenerated(null);
-        }
-    }, [content, aiResponse, lastGenerated]);
-
-    // Effect to clear response when appropriate
-    useEffect(() => {
-        handleClearResponse();
-    }, [handleClearResponse]);
-
-    const copyToClipboard = () => {
-        if (!aiResponse) return;
-
-        navigator.clipboard.writeText(aiResponse);
-        toast.success("Text copied to clipboard");
-    };
-
+    // Enable if content or tone has changed since last generation
     return (
-        <>
-            <main className="min-h-10 w-11/12 rounded-md border-2 border-zinc-500 bg-gray-400/30 shadow-lg md:min-h-24 md:w-7/12">
-                <textarea
-                    placeholder="Drop your Tweet here..."
-                    rows={2}
-                    value={content}
-                    onInput={handleInput}
-                    onChange={handleContentChange}
-                    disabled={isLoading}
-                    className="placeholder:text-muted-foreground md:text-md mt-2 flex h-fit max-h-[250px] min-h-[30px] w-full resize-none overflow-y-auto rounded-md border-none bg-transparent p-2 text-base text-white shadow-none focus:border-none focus:outline-none focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 max-sm:text-xs"
-                    aria-label="Tweet content input"
-                />
-
-                <div className="mt-2 mb-2 flex items-center justify-between px-2 md:px-6">
-                    <div className="flex-shrink-0">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger
-                                className="md:text-md cursor-pointer rounded-md border-zinc-600 bg-zinc-900/90 px-4 py-1 text-base text-white shadow-sm hover:bg-zinc-800 focus:ring-0 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 max-sm:text-xs md:px-8"
-                                disabled={isLoading}
-                                aria-label={`Selected tone: ${selectedTone}`}
-                            >
-                                {selectedTone}
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-20 border-zinc-700 bg-zinc-900/90 text-white md:w-32">
-                                {TONES.map((tone) => (
-                                    <DropdownMenuItem
-                                        key={tone}
-                                        onClick={() => handleToneSelect(tone)}
-                                        className={
-                                            selectedTone === tone
-                                                ? "bg-zinc-700"
-                                                : ""
-                                        }
-                                    >
-                                        {tone}
-                                    </DropdownMenuItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-
-                    <button
-                        disabled={!isButtonEnabled || isLoading}
-                        onClick={handleSubmit}
-                        className={`rounded-lg border-zinc-700 bg-zinc-900/90 p-1 text-white shadow-sm transition-all duration-200 ${
-                            isButtonEnabled && !isLoading
-                                ? "cursor-pointer hover:scale-105 hover:bg-zinc-800"
-                                : "cursor-not-allowed opacity-50"
-                        }`}
-                        aria-label={
-                            isLoading
-                                ? "Generating..."
-                                : isButtonEnabled
-                                  ? "Generate refined tweet"
-                                  : "Enter content and select tone to generate"
-                        }
-                        type="button"
-                    >
-                        <Forward className={isLoading ? "animate-pulse" : ""} />
-                    </button>
-                </div>
-            </main>
-
-            {aiResponse?.trim() && (
-                <>
-                    <CopyShare copyText={copyToClipboard} />
-                    <div
-                        className={`${aiResponse.trim() === "" ? "hidden" : "block"} md:text-md relative mx-auto mt-3 flex min-h-8 w-11/12 items-center justify-center rounded-md border-2 border-zinc-500 bg-zinc-900/70 text-white shadow-lg max-sm:text-xs md:mx-auto md:mt-1 md:min-h-16 md:w-7/12`}
-                        style={{
-                            // height: "80px",
-                            overflowY: "hidden",
-                            overflowX: "hidden",
-                        }}
-                    >
-                        <div>
-                            <Result response={aiResponse} />
-                        </div>
-                    </div>
-                </>
-            )}
-        </>
+      lastGenerated.content !== content.trim() ||
+      lastGenerated.tone !== selectedTone
     );
+  }, [content, selectedTone, lastGenerated]);
+
+  // Memoized textarea resize handler
+  const handleInput = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const target = e.target;
+      target.style.height = "auto";
+      target.style.height = `${target.scrollHeight}px`;
+    },
+    [],
+  );
+
+  // Memoized content change handler
+  const handleContentChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setContent(e.target.value);
+    },
+    [],
+  );
+
+  // Memoized tone selection handler
+  const handleToneSelect = useCallback((tone: string) => {
+    setSelectedTone(tone);
+  }, []);
+
+  // 1. Reusable generation logic
+  const generateTweet = useCallback(
+    async (tweetText: string, toneValue: string) => {
+      try {
+        setIsLoading(true);
+        const response = await axios.post<GenerateResponse>("/api/generate", {
+          tweet: tweetText,
+          tone: toneValue,
+        });
+        if (response.data?.message) {
+          setAiResponse(response.data.message);
+          setLastGenerated({
+            content: tweetText,
+            tone: toneValue,
+          });
+          queryClient.invalidateQueries({ queryKey: ["credits"] });
+        } else {
+          throw new Error("Invalid response format");
+        }
+      } catch (error: any) {
+        console.error("Error generating content:", error);
+        // ... Keep your existing error toast checks here ...
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [queryClient],
+  );
+
+  // 2. Original button submit
+  const handleSubmit = useCallback(async () => {
+    if (!isButtonEnabled || isLoading) return;
+
+    const trimmedContent = content.trim();
+
+    try {
+      setIsLoading(true);
+
+      const requestData: GenerateRequest = {
+        tweet: trimmedContent,
+        tone: selectedTone,
+      };
+
+      const response = await axios.post<GenerateResponse>(
+        "/api/generate",
+        requestData,
+      );
+
+      if (response.data?.message) {
+        setAiResponse(response.data.message);
+
+        // Update last generated state
+        setLastGenerated({
+          content: trimmedContent,
+          tone: selectedTone,
+        });
+
+        // Invalidate credits cache to trigger refetch
+        queryClient.invalidateQueries({ queryKey: ["credits"] });
+
+        console.log("Generation successful:", response.data);
+      } else {
+        throw new Error("Invalid response format");
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.error("Error generating content:", error);
+
+      // Enhanced error handling
+      if (error.response?.status === 403 && error.response?.data?.requireauth) {
+        toast.error("Free limit exceeded. Please login to continue");
+      } else if (error.response?.status >= 500) {
+        toast.error("Server error. Please try again later");
+      } else if (error.code === "NETWORK_ERROR") {
+        toast.error("Network error. Please check your connection");
+      } else if (error.response?.status === 429) {
+        toast.error(
+          error.response.data?.message ||
+            "Rate Limit exceeded. Max 10 Requests/min",
+        );
+      } else {
+        toast.error("Failed to refine the tweet. Try again later");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [content, selectedTone, isButtonEnabled, isLoading]);
+
+  // 3. Card click handler
+  const handleSuggestionClick = useCallback(
+    (text: string, tone: string) => {
+      if (isLoading) return;
+      setContent(text);
+      setSelectedTone(tone);
+      generateTweet(text, tone);
+    },
+    [isLoading, generateTweet],
+  );
+
+  // Clear response when content changes significantly
+  const handleClearResponse = useCallback(() => {
+    if (aiResponse && (!content.trim() || !lastGenerated)) {
+      setAiResponse(null);
+      setLastGenerated(null);
+    }
+  }, [content, aiResponse, lastGenerated]);
+
+  // Effect to clear response when appropriate
+  useEffect(() => {
+    handleClearResponse();
+  }, [handleClearResponse]);
+
+  const copyToClipboard = () => {
+    if (!aiResponse) return;
+
+    navigator.clipboard.writeText(aiResponse);
+    toast.success("Text copied to clipboard");
+  };
+
+  return (
+    <>
+      <main className="min-h-10 w-11/12 rounded-md border-2 border-zinc-500 bg-gray-400/30 shadow-lg md:min-h-24 md:w-7/12">
+        <textarea
+          placeholder="Drop your Tweet here..."
+          rows={2}
+          value={content}
+          onInput={handleInput}
+          onChange={handleContentChange}
+          disabled={isLoading}
+          className="placeholder:text-muted-foreground md:text-md mt-2 flex h-fit max-h-[250px] min-h-[30px] w-full resize-none overflow-y-auto rounded-md border-none bg-transparent p-2 text-base text-white shadow-none focus:border-none focus:outline-none focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 max-sm:text-xs"
+          aria-label="Tweet content input"
+        />
+
+        <div className="mt-2 mb-2 flex items-center justify-between px-2 md:px-6">
+          <div className="flex-shrink-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className="md:text-md cursor-pointer rounded-md border-zinc-600 bg-zinc-900/90 px-4 py-1 text-base text-white shadow-sm hover:bg-zinc-800 focus:ring-0 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 max-sm:text-xs md:px-8"
+                disabled={isLoading}
+                aria-label={`Selected tone: ${selectedTone}`}
+              >
+                {selectedTone}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-20 border-zinc-700 bg-zinc-900/90 text-white md:w-32">
+                {TONES.map((tone) => (
+                  <DropdownMenuItem
+                    key={tone}
+                    onClick={() => handleToneSelect(tone)}
+                    className={selectedTone === tone ? "bg-zinc-700" : ""}
+                  >
+                    {tone}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <span
+            className={`font-mono text-xs transition-colors ${content.length > 280 ? "font-bold text-red-500" : "text-zinc-500"}`}
+          >
+            {content.length}/280
+          </span>
+          <button
+            disabled={!isButtonEnabled || isLoading}
+            onClick={handleSubmit}
+            className={`rounded-lg border-zinc-700 bg-zinc-900/90 p-1 text-white shadow-sm transition-all duration-200 ${
+              isButtonEnabled && !isLoading
+                ? "cursor-pointer hover:scale-105 hover:bg-zinc-800"
+                : "cursor-not-allowed opacity-50"
+            }`}
+            aria-label={
+              isLoading
+                ? "Generating..."
+                : isButtonEnabled
+                  ? "Generate refined tweet"
+                  : "Enter content and select tone to generate"
+            }
+            type="button"
+          >
+            <Forward className={isLoading ? "animate-pulse" : ""} />
+          </button>
+        </div>
+      </main>
+
+      <div className="mt-6 w-11/12 md:w-7/12">
+        <p className="mb-3 text-xs font-semibold tracking-wider text-zinc-500 uppercase">
+          Suggested Prompts
+        </p>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {SUGGESTIONS.map((sug, idx) => (
+            <button
+              key={idx}
+              disabled={isLoading}
+              onClick={() => handleSuggestionClick(sug.text, sug.tone)}
+              className="group flex cursor-pointer flex-col items-start rounded-xl border border-zinc-800 bg-zinc-950/40 p-3 text-left transition-all duration-200 hover:border-zinc-700 hover:bg-zinc-900/40 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <span className="text-xs font-bold text-neutral-200 transition-colors group-hover:text-pink-400">
+                {sug.title}
+              </span>
+              <span className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-zinc-500">
+                {sug.text}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {aiResponse?.trim() && (
+        <>
+          <CopyShare copyText={copyToClipboard} />
+          <div
+            className={`${aiResponse.trim() === "" ? "hidden" : "block"} md:text-md relative mx-auto mt-3 flex min-h-8 w-11/12 items-center justify-center rounded-md border-2 border-zinc-500 bg-zinc-900/70 text-white shadow-lg max-sm:text-xs md:mx-auto md:mt-1 md:min-h-16 md:w-7/12`}
+            style={{
+              // height: "80px",
+              overflowY: "hidden",
+              overflowX: "hidden",
+            }}
+          >
+            <div>
+              <Result response={aiResponse} />
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  );
 }
