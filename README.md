@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TweetCraft 🚀
 
-## Getting Started
+TweetCraft is a modern, AI-powered web application designed to help users refine and "elevate" their draft thoughts into polished, timeline-ready tweets. Users can customize their writing tone (e.g., Casual, Persuasive, Witty, Humorous), store personalized system instructions, and keep track of their request credits.
 
-First, run the development server:
+---
+
+## Features
+* **AI-Powered Refinement**: Powered by Llama 3.1 8B via Hugging Face Inference API.
+* **Custom Tones**: Instantly convert drafts into Casual, Persuasive, Humorous, Formal, and more.
+* **Personalized Prompts**: Save a custom core system instruction in your profile to drive how the AI edits your tweets.
+* **Credits & Rate Limiting**: Built-in rate limiting powered by Upstash Redis (10 requests/min for logged-in users, 2 requests/hour for guests) with a real-time header count.
+* **Google Authentication**: Seamless sign-in/out integration using NextAuth.
+* **Stunning Dark UI**: Premium glassmorphic interface with cool magenta highlights.
+
+---
+
+## Local Setup Guide
+
+Follow these steps to spin up the application on your local machine:
+
+### 1. Prerequisites
+Ensure you have the following installed:
+* **Node.js** (v20+ recommended)
+* **pnpm** (or npm/yarn)
+* **Docker** (to run local database and cache services)
+
+---
+
+### 2. Run Database and Cache Services
+Use Docker to spin up local PostgreSQL and Redis containers:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Start PostgreSQL (Database)
+docker run --name tweetcraft-postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=secretpassword \
+  -e POSTGRES_DB=tweetcraft \
+  -p 5432:5432 \
+  -d postgres
+
+# Start Redis (Rate-limiting)
+docker run --name tweetcraft-redis \
+  -p 6379:6379 \
+  -d redis
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Configure Environment Variables
+Create a `.env` file in the root directory and add your keys:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+# NextAuth Settings
+NEXTAUTH_SECRET="your_nextauth_secret_key"
+NEXTAUTH_URL="http://localhost:3000"
 
-## Learn More
+# Google OAuth Client Credentials
+GOOGLE_CLIENT_ID="your_google_client_id.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="your_google_client_secret"
 
-To learn more about Next.js, take a look at the following resources:
+# Database Connection (Prisma)
+DATABASE_URL="postgresql://postgres:secretpassword@localhost:5432/tweetcraft?schema=public"
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Redis Connection (development rate limiting)
+REDIS_URL="redis://localhost:6379"
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# AI Inference (Hugging Face)
+HF_TOKEN="your_hugging_face_user_token"
+HF_MODEL="meta-llama/Llama-3.1-8B-Instruct"
 
-## Deploy on Vercel
+# AI Prompts (Defaults)
+SYSTEM_PROMPT="You are an expert tweet editor. Your job is to refine tweets for clarity, tone, and impact—without adding new content or exceeding 280 characters."
+GEMINI_MODEL="gemini-1.5-flash"
+GEMINI_API_KEY="optional_gemini_key"
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 4. Install Dependencies
+Install all package dependencies:
+
+```bash
+pnpm install
+# or npm install
+```
+
+---
+
+### 5. Setup the Database Schema
+Push the Prisma schema to your newly created local PostgreSQL database to generate client types and create tables:
+
+```bash
+npx prisma db push
+```
+
+---
+
+### 6. Run the Application
+Start the local development server:
+
+```bash
+pnpm run dev
+# or npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
