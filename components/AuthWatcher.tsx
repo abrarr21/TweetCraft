@@ -1,23 +1,25 @@
 "use client";
 import { useSession } from "next-auth/react";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
 export default function AuthWatcher() {
-    const { status } = useSession();
-    const previousStatus = useRef(status);
+  const { status } = useSession();
 
-    useEffect(() => {
-        if (previousStatus.current !== status) {
-            if (status === "authenticated") {
-                toast.success("Signed in successfully", { duration: 2000 });
-            } else if (status === "unauthenticated") {
-                toast("Signed out successfully", { duration: 2000 });
-            }
+  useEffect(() => {
+    if (status === "loading") return;
 
-            previousStatus.current = status;
-        }
-    }, [status]);
+    const action = sessionStorage.getItem("auth_action");
+    if (action) {
+      if (status === "authenticated" && action === "signin") {
+        toast.success("Signed in successfully", { duration: 2000 });
+      } else if (status === "unauthenticated" && action === "signout") {
+        toast("Signed out successfully", { duration: 2000 });
+      }
+      // Clear the action so it doesn't trigger again on subsequent refreshes
+      sessionStorage.removeItem("auth_action");
+    }
+  }, [status]);
 
-    return null;
+  return null;
 }
