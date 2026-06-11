@@ -105,7 +105,7 @@ export async function POST(req: Request) {
         let aiResponse: string;
         try {
             const chatCompletion = await llama.chatCompletion({
-                model: "meta-llama/Llama-3.1-8B-Instruct:cerebras",
+                model: process.env.HF_MODEL,
                 messages: [
                     {
                         role: "system",
