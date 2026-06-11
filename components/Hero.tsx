@@ -1,11 +1,9 @@
 export default function Hero() {
-    return (
-        <div /* className="flex flex-col items-center justify-center gap-4 md:gap-8" */
-        >
-            <h1 className="mt-24 bg-transparent bg-clip-text text-6xl font-bold text-neutral-200 max-sm:text-2xl md:mt-32">
-                Tell me what to spice up!
-            </h1>
-            {/* <MainPage /> */}
-        </div>
-    );
+  return (
+    <div className="flex flex-col items-center justify-center text-center">
+      <h1 className="font-display mt-24 text-4xl font-extrabold tracking-tight text-neutral-200 max-sm:text-2xl md:mt-32 md:text-6xl">
+        Tell me what to <span className="font-mono text-pink-400">CRAFT!</span>
+      </h1>
+    </div>
+  );
 }
