@@ -90,7 +90,7 @@ export default function MainPage() {
         } else {
           throw new Error("Invalid response format");
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error generating content:", error);
         // ... Keep your existing error toast checks here ...
       } finally {
@@ -157,7 +157,7 @@ export default function MainPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [content, selectedTone, isButtonEnabled, isLoading]);
+  }, [content, selectedTone, isButtonEnabled, isLoading, queryClient]);
 
   // 3. Card click handler
   const handleSuggestionClick = useCallback(
